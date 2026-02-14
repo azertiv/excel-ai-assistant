@@ -162,7 +162,7 @@ Each turn logs estimated input/output tokens to `AI Log` when logging is enabled
 
 - Default options shown in Settings:
   - `gemini-3-flash-preview`
-  - `gemini-3-flash-lite`
+  - `gemini-2.5-flash-lite`
 - Model is selectable in Settings and shown in header.
 - Uses Gemini function declarations where available.
 - Falls back to JSON tool-call protocol parsing.

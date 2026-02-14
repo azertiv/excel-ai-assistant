@@ -42,7 +42,7 @@ export function SettingsPanel(): JSX.Element {
             {settings.provider === "gemini" ? (
               <>
                 <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-                <option value="gemini-3-flash-lite">gemini-3-flash-lite</option>
+                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
                 <option value={activeModel}>{activeModel}</option>
               </>
             ) : (
