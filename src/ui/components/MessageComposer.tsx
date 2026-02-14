@@ -27,12 +27,21 @@ export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX
         onChange={(_, data) => {
           setValue(data.value);
         }}
-        placeholder="Ask about this workbook..."
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            event.preventDefault();
+            void submit();
+          }
+        }}
+        placeholder="Ask anything about the workbook. Use Cmd/Ctrl + Enter to send."
         disabled={disabled}
       />
-      <Button appearance="primary" disabled={disabled} onClick={() => void submit()}>
-        Send
-      </Button>
+
+      <div className="composer-actions">
+        <Button appearance="primary" disabled={disabled} onClick={() => void submit()}>
+          Send request
+        </Button>
+      </div>
     </div>
   );
 }

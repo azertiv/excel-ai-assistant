@@ -1,16 +1,16 @@
 import {
   Body1,
+  Caption1,
   Select,
   Spinner,
   Switch,
   Tab,
   TabList,
-  Text,
-  tokens
+  Text
 } from "@fluentui/react-components";
 import { useEffect, useMemo, useState } from "react";
 import { agentRunner } from "@/llm/agentRunner";
-import { getContextPack, createDocumentationSheet, undoTurnChanges } from "@/office/excelClient";
+import { createDocumentationSheet, getContextPack, undoTurnChanges } from "@/office/excelClient";
 import { revertRangeChange } from "@/office/tools";
 import { useSessionStore } from "@/state/sessionStore";
 import { useSettingsStore } from "@/state/settingsStore";
@@ -39,13 +39,14 @@ function askApprovalDialog(request: {
     null,
     2
   )}`;
+
   return Promise.resolve(window.confirm(message));
 }
 
 export default function App(): JSX.Element {
   const settingsState = useSettingsStore();
   const sessionState = useSessionStore();
-  const [activeTab, setActiveTab] = useState<"chat" | "timeline" | "diffs">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "timeline" | "diffs" | "settings">("chat");
 
   const loadSettings = settingsState.loadSettings;
 
@@ -58,6 +59,28 @@ export default function App(): JSX.Element {
   const pendingChanges = useMemo(
     () => sessionState.rangeChanges.filter((change) => !change.reverted),
     [sessionState.rangeChanges]
+  );
+
+  const stats = useMemo(
+    () => [
+      {
+        label: "Turns",
+        value: String(sessionState.turnRecords.length)
+      },
+      {
+        label: "Pending",
+        value: String(pendingChanges.length)
+      },
+      {
+        label: "Messages",
+        value: String(sessionState.messages.length)
+      },
+      {
+        label: "Budget",
+        value: settingsState.settings.maxTokenBudget.toLocaleString()
+      }
+    ],
+    [sessionState.turnRecords.length, pendingChanges.length, sessionState.messages.length, settingsState.settings.maxTokenBudget]
   );
 
   const runPrompt = async (prompt: string): Promise<void> => {
@@ -107,6 +130,7 @@ export default function App(): JSX.Element {
         maxColumns: 10
       });
       const sheetName = await createDocumentationSheet(context);
+
       sessionState.addMessage({
         role: "assistant",
         content: `Created documentation sheet [[${sheetName}!A1:C20]] with workbook metadata and map.`,
@@ -151,52 +175,79 @@ export default function App(): JSX.Element {
 
   return (
     <div className="app-shell">
-      <header className="top-header">
-        <div className="title-group">
-          <Text size={500} weight="semibold">
-            Excel AI Assistant
+      <div className="bg-orb bg-orb-a" />
+      <div className="bg-orb bg-orb-b" />
+
+      <header className="hero-header">
+        <div className="hero-copy">
+          <Caption1 className="hero-kicker">Excel AI Studio</Caption1>
+          <Text size={600} weight="semibold" block>
+            Precision answers inside your workbook
           </Text>
-          <Body1>Provider: {settingsState.settings.provider} | Model: {currentModel}</Body1>
+          <Body1 className="hero-subtitle">
+            Every response is cited, every edit is traceable, every action is reviewable.
+          </Body1>
         </div>
 
-        <div className="header-controls">
-          <Select
-            value={currentModel}
-            onChange={(_, data) => {
-              settingsState.setModel(settingsState.settings.provider, data.value);
-            }}
-          >
-            {settingsState.settings.provider === "gemini" ? (
-              <>
-                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-                <option value="gemini-3-flash-lite">gemini-3-flash-lite</option>
-                <option value={currentModel}>{currentModel}</option>
-              </>
-            ) : (
-              <option value={currentModel}>{currentModel}</option>
-            )}
-          </Select>
+        <div className="hero-controls">
+          <div className="hero-chip-row">
+            <span className="hero-chip">Provider: {settingsState.settings.provider}</span>
+            <span className="hero-chip">Model: {currentModel}</span>
+            <span className={`hero-chip ${sessionState.busy ? "chip-busy" : "chip-ready"}`}>
+              {sessionState.busy ? "Running" : "Ready"}
+            </span>
+          </div>
 
-          <Switch
-            checked={settingsState.settings.approvalMode}
-            label={settingsState.settings.approvalMode ? "Approval mode" : "Autonomous mode"}
-            onChange={(_, data) => {
-              settingsState.updateSettings({ approvalMode: data.checked });
-            }}
-          />
+          <div className="hero-control-row">
+            <Select
+              value={currentModel}
+              onChange={(_, data) => {
+                settingsState.setModel(settingsState.settings.provider, data.value);
+              }}
+            >
+              {settingsState.settings.provider === "gemini" ? (
+                <>
+                  <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+                  <option value="gemini-3-flash-lite">gemini-3-flash-lite</option>
+                  <option value={currentModel}>{currentModel}</option>
+                </>
+              ) : (
+                <option value={currentModel}>{currentModel}</option>
+              )}
+            </Select>
+
+            <Switch
+              checked={settingsState.settings.approvalMode}
+              label={settingsState.settings.approvalMode ? "Approval mode" : "Autonomous mode"}
+              onChange={(_, data) => {
+                settingsState.updateSettings({ approvalMode: data.checked });
+              }}
+            />
+          </div>
         </div>
       </header>
 
-      <ActionToolbar
-        disabled={sessionState.busy}
-        onCaptureSelectionContext={onCaptureSelectionContext}
-        onSummarizeWorkbook={onSummarizeWorkbook}
-        onCreateDocumentationSheet={onCreateDocumentationSheet}
-        onUndoLastTurn={onUndoLastTurn}
-      />
+      <section className="stats-ribbon">
+        {stats.map((stat) => (
+          <article key={stat.label} className="stat-card">
+            <Caption1>{stat.label}</Caption1>
+            <Text weight="semibold" size={400}>
+              {stat.value}
+            </Text>
+          </article>
+        ))}
+      </section>
 
-      <div className="content-grid" style={{ borderTop: `1px solid ${tokens.colorNeutralStroke1}` }}>
-        <section className="main-panel">
+      <section className="workbench-card">
+        <ActionToolbar
+          disabled={sessionState.busy}
+          onCaptureSelectionContext={onCaptureSelectionContext}
+          onSummarizeWorkbook={onSummarizeWorkbook}
+          onCreateDocumentationSheet={onCreateDocumentationSheet}
+          onUndoLastTurn={onUndoLastTurn}
+        />
+
+        <div className="surface-tabs">
           <TabList
             selectedValue={activeTab}
             onTabSelect={(_, data) => {
@@ -205,11 +256,20 @@ export default function App(): JSX.Element {
           >
             <Tab value="chat">Chat</Tab>
             <Tab value="timeline">Timeline</Tab>
-            <Tab value="diffs">Diffs ({pendingChanges.length})</Tab>
+            <Tab value="diffs">Changes ({pendingChanges.length})</Tab>
+            <Tab value="settings">Settings</Tab>
           </TabList>
+        </div>
 
+        <div className="surface-view">
           {activeTab === "chat" ? <ChatView messages={sessionState.messages} /> : null}
-          {activeTab === "timeline" ? <AgentTimeline steps={sessionState.timelineSteps} toolCards={sessionState.toolCards} /> : null}
+
+          {activeTab === "timeline" ? (
+            <section className="panel-single">
+              <AgentTimeline steps={sessionState.timelineSteps} toolCards={sessionState.toolCards} />
+            </section>
+          ) : null}
+
           {activeTab === "diffs" ? (
             <div className="diff-list">
               {sessionState.rangeChanges.map((change) => (
@@ -219,11 +279,19 @@ export default function App(): JSX.Element {
             </div>
           ) : null}
 
-          <MessageComposer disabled={sessionState.busy || !settingsState.hydrated} onSend={runPrompt} />
-        </section>
+          {activeTab === "settings" ? (
+            <section className="panel-single">
+              <SettingsPanel />
+            </section>
+          ) : null}
+        </div>
 
-        <SettingsPanel />
-      </div>
+        {activeTab === "chat" ? (
+          <div className="composer-shell">
+            <MessageComposer disabled={sessionState.busy || !settingsState.hydrated} onSend={runPrompt} />
+          </div>
+        ) : null}
+      </section>
 
       {sessionState.busy ? <Spinner label="Assistant is working..." className="busy-indicator" /> : null}
     </div>

@@ -31,12 +31,24 @@ export function DiffCard({ change, onRevert }: DiffCardProps): JSX.Element {
         header={<Text weight="semibold">{change.address}</Text>}
         description={<Caption1>{change.reason}</Caption1>}
       />
-      <Caption1>Changed cells: {change.changedCellCount}</Caption1>
+
+      <div className="diff-meta-row">
+        <Caption1>
+          <strong>Changed cells:</strong> {change.changedCellCount}
+        </Caption1>
+        <Caption1>
+          <strong>Status:</strong> {change.reverted ? "Reverted" : "Active"}
+        </Caption1>
+      </div>
+
       <Divider />
+
       <Caption1>Before</Caption1>
       <pre className="diff-pre">{previewMatrix(change.before.values, change.before.formulas)}</pre>
+
       <Caption1>After</Caption1>
       <pre className="diff-pre">{previewMatrix(change.after.values, change.after.formulas)}</pre>
+
       <Button
         size="small"
         appearance={change.reverted ? "secondary" : "outline"}
@@ -45,7 +57,7 @@ export function DiffCard({ change, onRevert }: DiffCardProps): JSX.Element {
           void onRevert(change);
         }}
       >
-        {change.reverted ? "Reverted" : "Revert this change"}
+        {change.reverted ? "Already reverted" : "Revert this change"}
       </Button>
     </Card>
   );

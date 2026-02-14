@@ -1,6 +1,6 @@
 import { Button } from "@fluentui/react-components";
-import { selectAndFlashRange } from "@/office/excelClient";
 import { useState } from "react";
+import { selectAndFlashRange } from "@/office/excelClient";
 
 interface CitationLinkProps {
   address: string;
@@ -21,6 +21,7 @@ export function CitationLink({ address, label }: CitationLinkProps): JSX.Element
 
   return (
     <Button
+      className="citation-chip"
       size="small"
       appearance="subtle"
       disabled={busy}

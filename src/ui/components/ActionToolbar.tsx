@@ -17,16 +17,16 @@ export function ActionToolbar({
 }: ActionToolbarProps): JSX.Element {
   return (
     <div className="action-toolbar">
-      <Button size="small" disabled={disabled} onClick={() => void onCaptureSelectionContext()}>
+      <Button className="action-btn" disabled={disabled} onClick={() => void onCaptureSelectionContext()}>
         Capture selection context
       </Button>
-      <Button size="small" disabled={disabled} onClick={() => void onSummarizeWorkbook()}>
+      <Button className="action-btn" disabled={disabled} onClick={() => void onSummarizeWorkbook()}>
         Summarize workbook
       </Button>
-      <Button size="small" disabled={disabled} onClick={() => void onCreateDocumentationSheet()}>
+      <Button className="action-btn" disabled={disabled} onClick={() => void onCreateDocumentationSheet()}>
         Create documentation sheet
       </Button>
-      <Button size="small" appearance="outline" disabled={disabled} onClick={() => void onUndoLastTurn()}>
+      <Button className="action-btn action-btn-danger" disabled={disabled} onClick={() => void onUndoLastTurn()}>
         Undo last turn
       </Button>
     </div>

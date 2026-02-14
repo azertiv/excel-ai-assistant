@@ -22,41 +22,60 @@ function statusLabel(status: TimelineStep["status"]): string {
 export function AgentTimeline({ steps, toolCards }: AgentTimelineProps): JSX.Element {
   return (
     <div className="timeline-panel">
-      <Text weight="semibold">Agent Timeline</Text>
-      {steps.map((step) => (
-        <Card key={step.id} size="small" className="timeline-step-card">
-          <CardHeader
-            header={<Body1>{step.label}</Body1>}
-            description={<Caption1>{statusLabel(step.status)}</Caption1>}
-          />
-          {step.details.length > 0 ? (
-            <div className="timeline-details">
-              {step.details.map((detail, index) => (
-                <Caption1 key={`${step.id}_${index}`}>{detail}</Caption1>
-              ))}
-            </div>
-          ) : null}
-        </Card>
-      ))}
+      <div className="timeline-head">
+        <Text weight="semibold">Agent Timeline</Text>
+        <Caption1>Live execution trace</Caption1>
+      </div>
+
+      <div className="timeline-steps">
+        {steps.map((step) => (
+          <Card key={step.id} size="small" className={`timeline-step-card status-${step.status}`}>
+            <CardHeader
+              header={<Body1>{step.label}</Body1>}
+              description={<span className={`status-pill status-${step.status}`}>{statusLabel(step.status)}</span>}
+            />
+
+            {step.details.length > 0 ? (
+              <div className="timeline-details">
+                {step.details.map((detail, index) => (
+                  <Caption1 key={`${step.id}_${index}`}>{detail}</Caption1>
+                ))}
+              </div>
+            ) : null}
+          </Card>
+        ))}
+      </div>
 
       {toolCards.length > 0 ? <Divider /> : null}
 
-      {toolCards.map((tool) => (
-        <Card key={tool.id} size="small" className="tool-card">
-          <CardHeader
-            header={<Body1>{tool.toolName}</Body1>}
-            description={<Caption1>{tool.status}</Caption1>}
-          />
-          <Caption1>Targets: {tool.targetRanges.length ? tool.targetRanges.join(", ") : "n/a"}</Caption1>
-          <Caption1>Reason: {tool.reason}</Caption1>
-          <Caption1>Duration: {tool.durationMs ? `${tool.durationMs}ms` : "-"}</Caption1>
-          <details>
-            <summary>Expand details</summary>
-            <pre className="tool-details-pre">Args: {tool.argsPreview}</pre>
-            <pre className="tool-details-pre">Result: {tool.resultPreview}</pre>
-          </details>
-        </Card>
-      ))}
+      <div className="tool-cards">
+        {toolCards.map((tool) => (
+          <Card key={tool.id} size="small" className={`tool-card status-${tool.status}`}>
+            <CardHeader
+              header={<Body1>{tool.toolName}</Body1>}
+              description={<span className={`status-pill status-${tool.status}`}>{tool.status}</span>}
+            />
+
+            <div className="tool-grid">
+              <Caption1>
+                <strong>Targets:</strong> {tool.targetRanges.length ? tool.targetRanges.join(", ") : "n/a"}
+              </Caption1>
+              <Caption1>
+                <strong>Reason:</strong> {tool.reason}
+              </Caption1>
+              <Caption1>
+                <strong>Duration:</strong> {tool.durationMs ? `${tool.durationMs}ms` : "-"}
+              </Caption1>
+            </div>
+
+            <details>
+              <summary>Expand details</summary>
+              <pre className="tool-details-pre">Args: {tool.argsPreview}</pre>
+              <pre className="tool-details-pre">Result: {tool.resultPreview}</pre>
+            </details>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
