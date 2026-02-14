@@ -31,6 +31,28 @@ function buildGeminiContents(messages: LlmMessage[]): Array<{ role: "user" | "mo
   }));
 }
 
+function stripUnsupportedGeminiSchemaFields(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripUnsupportedGeminiSchemaFields(item));
+  }
+
+  if (value && typeof value === "object") {
+    const input = value as Record<string, unknown>;
+    const output: Record<string, unknown> = {};
+
+    Object.entries(input).forEach(([key, fieldValue]) => {
+      if (key === "additionalProperties") {
+        return;
+      }
+      output[key] = stripUnsupportedGeminiSchemaFields(fieldValue);
+    });
+
+    return output;
+  }
+
+  return value;
+}
+
 function buildGeminiTools(tools: ToolSchema[]): Array<{ functionDeclarations: Array<{ name: string; description: string; parameters: Record<string, unknown> }> }> {
   if (!tools.length) {
     return [];
@@ -41,7 +63,7 @@ function buildGeminiTools(tools: ToolSchema[]): Array<{ functionDeclarations: Ar
       functionDeclarations: tools.map((tool) => ({
         name: tool.name,
         description: tool.description,
-        parameters: tool.inputSchema
+        parameters: stripUnsupportedGeminiSchemaFields(tool.inputSchema) as Record<string, unknown>
       }))
     }
   ];
