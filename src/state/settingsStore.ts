@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { clampBudget } from "@/utils/token";
-import type { AppSettings, ProviderId } from "./types";
+import type { ApiKeys, AppSettings, ProviderId, ProviderModelConfig } from "./types";
 
 const SETTINGS_STORAGE_KEY = "excel-ai-assistant.settings.v1";
 const MIN_TOKEN_BUDGET = 1000;
@@ -98,6 +98,25 @@ async function persistSettings(settings: AppSettings): Promise<void> {
   await saveToRoamingSettings(serialized);
 }
 
+function mergeModels(
+  local: Partial<AppSettings> | null,
+  roaming: Partial<AppSettings> | null
+): ProviderModelConfig {
+  return {
+    ...DEFAULT_SETTINGS.models,
+    ...(local?.models ?? {}),
+    ...(roaming?.models ?? {})
+  };
+}
+
+function mergeApiKeys(local: Partial<AppSettings> | null, roaming: Partial<AppSettings> | null): ApiKeys {
+  return {
+    ...DEFAULT_SETTINGS.apiKeys,
+    ...(local?.apiKeys ?? {}),
+    ...(roaming?.apiKeys ?? {})
+  };
+}
+
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   settings: DEFAULT_SETTINGS,
   hydrated: false,
@@ -152,19 +171,16 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     void persistSettings(get().settings);
   },
   loadSettings: async () => {
-    const local = tryParseSettings(typeof localStorage !== "undefined" ? localStorage.getItem(SETTINGS_STORAGE_KEY) : null);
+    const local = tryParseSettings(
+      typeof localStorage !== "undefined" ? localStorage.getItem(SETTINGS_STORAGE_KEY) : null
+    );
     const roaming = loadFromRoamingSettings();
+
     const combined = normalizeSettings({
       ...local,
       ...roaming,
-      models: {
-        ...(local?.models ?? {}),
-        ...(roaming?.models ?? {})
-      },
-      apiKeys: {
-        ...(local?.apiKeys ?? {}),
-        ...(roaming?.apiKeys ?? {})
-      }
+      models: mergeModels(local, roaming),
+      apiKeys: mergeApiKeys(local, roaming)
     });
 
     set({ settings: combined, hydrated: true });

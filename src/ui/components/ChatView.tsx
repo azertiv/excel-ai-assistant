@@ -25,7 +25,7 @@ export function ChatView({ messages }: ChatViewProps): JSX.Element {
             <Text weight="semibold" size={200}>
               {message.role.toUpperCase()}
             </Text>
-            <Body1 as="div">
+            <Body1>
               {parts.map((part, index) => {
                 if (part.type === "citation") {
                   return <CitationLink key={`${message.id}_${index}`} address={part.value} label={`[[${part.value}]]`} />;

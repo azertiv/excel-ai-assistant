@@ -429,7 +429,7 @@ export class AgentRunner {
             toolName: response.call.name,
             reason: response.call.reason,
             args: response.call.args,
-            risk
+            risk: risk ?? undefined
           });
 
           if (!approved) {

@@ -524,7 +524,13 @@ export async function updatePivotFilters(options: {
     const pivots = (context.workbook.worksheets.getItem(options.sheetName) as unknown as { pivotTables: Excel.PivotTableCollection }).pivotTables;
     const pivot = pivots.getItem(options.pivotName);
     const hierarchy = pivot.hierarchies.getItem(options.fieldName);
-    hierarchy.filter.applyManualFilter({ selectedItems: options.visibleItems });
+    const hierarchyWithFilter = hierarchy as unknown as {
+      filter?: {
+        applyManualFilter: (input: { selectedItems: string[] }) => void;
+      };
+    };
+
+    hierarchyWithFilter.filter?.applyManualFilter({ selectedItems: options.visibleItems });
     await context.sync();
   });
 }
