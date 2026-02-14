@@ -1,13 +1,4 @@
-import {
-  Body1,
-  Caption1,
-  Select,
-  Spinner,
-  Switch,
-  Tab,
-  TabList,
-  Text
-} from "@fluentui/react-components";
+import { Body1, Caption1, Select, Spinner, Switch, Tab, TabList, Text } from "@fluentui/react-components";
 import { useEffect, useMemo, useState } from "react";
 import { agentRunner } from "@/llm/agentRunner";
 import { createDocumentationSheet, getContextPack, undoTurnChanges } from "@/office/excelClient";
@@ -46,7 +37,7 @@ function askApprovalDialog(request: {
 export default function App(): JSX.Element {
   const settingsState = useSettingsStore();
   const sessionState = useSessionStore();
-  const [activeTab, setActiveTab] = useState<"chat" | "timeline" | "diffs" | "settings">("chat");
+  const [viewMode, setViewMode] = useState<"workspace" | "settings">("workspace");
 
   const loadSettings = settingsState.loadSettings;
 
@@ -59,28 +50,6 @@ export default function App(): JSX.Element {
   const pendingChanges = useMemo(
     () => sessionState.rangeChanges.filter((change) => !change.reverted),
     [sessionState.rangeChanges]
-  );
-
-  const stats = useMemo(
-    () => [
-      {
-        label: "Turns",
-        value: String(sessionState.turnRecords.length)
-      },
-      {
-        label: "Pending",
-        value: String(pendingChanges.length)
-      },
-      {
-        label: "Messages",
-        value: String(sessionState.messages.length)
-      },
-      {
-        label: "Budget",
-        value: settingsState.settings.maxTokenBudget.toLocaleString()
-      }
-    ],
-    [sessionState.turnRecords.length, pendingChanges.length, sessionState.messages.length, settingsState.settings.maxTokenBudget]
   );
 
   const runPrompt = async (prompt: string): Promise<void> => {
@@ -175,122 +144,111 @@ export default function App(): JSX.Element {
 
   return (
     <div className="app-shell">
-      <div className="bg-orb bg-orb-a" />
-      <div className="bg-orb bg-orb-b" />
-
-      <header className="hero-header">
-        <div className="hero-copy">
-          <Caption1 className="hero-kicker">Excel AI Studio</Caption1>
-          <Text size={600} weight="semibold" block>
-            Precision answers inside your workbook
+      <header className="pane-header">
+        <div className="pane-title-group">
+          <Text size={500} weight="semibold" block>
+            Excel AI Assistant
           </Text>
-          <Body1 className="hero-subtitle">
-            Every response is cited, every edit is traceable, every action is reviewable.
-          </Body1>
+          <Caption1>Workbook chat with citations, live timeline, and reversible changes.</Caption1>
         </div>
 
-        <div className="hero-controls">
-          <div className="hero-chip-row">
-            <span className="hero-chip">Provider: {settingsState.settings.provider}</span>
-            <span className="hero-chip">Model: {currentModel}</span>
-            <span className={`hero-chip ${sessionState.busy ? "chip-busy" : "chip-ready"}`}>
-              {sessionState.busy ? "Running" : "Ready"}
-            </span>
-          </div>
-
-          <div className="hero-control-row">
-            <Select
-              value={currentModel}
-              onChange={(_, data) => {
-                settingsState.setModel(settingsState.settings.provider, data.value);
-              }}
-            >
-              {settingsState.settings.provider === "gemini" ? (
-                <>
-                  <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-                  <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-                  <option value={currentModel}>{currentModel}</option>
-                </>
-              ) : (
+        <div className="pane-controls">
+          <span className={`status-chip ${sessionState.busy ? "busy" : "ready"}`}>
+            {sessionState.busy ? "Running" : "Ready"}
+          </span>
+          <Select
+            value={currentModel}
+            onChange={(_, data) => {
+              settingsState.setModel(settingsState.settings.provider, data.value);
+            }}
+          >
+            {settingsState.settings.provider === "gemini" ? (
+              <>
+                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
                 <option value={currentModel}>{currentModel}</option>
-              )}
-            </Select>
-
-            <Switch
-              checked={settingsState.settings.approvalMode}
-              label={settingsState.settings.approvalMode ? "Approval mode" : "Autonomous mode"}
-              onChange={(_, data) => {
-                settingsState.updateSettings({ approvalMode: data.checked });
-              }}
-            />
-          </div>
+              </>
+            ) : (
+              <option value={currentModel}>{currentModel}</option>
+            )}
+          </Select>
+          <Switch
+            checked={settingsState.settings.approvalMode}
+            label={settingsState.settings.approvalMode ? "Approval" : "Auto"}
+            onChange={(_, data) => {
+              settingsState.updateSettings({ approvalMode: data.checked });
+            }}
+          />
         </div>
       </header>
 
-      <section className="stats-ribbon">
-        {stats.map((stat) => (
-          <article key={stat.label} className="stat-card">
-            <Caption1>{stat.label}</Caption1>
-            <Text weight="semibold" size={400}>
-              {stat.value}
-            </Text>
-          </article>
-        ))}
-      </section>
-
-      <section className="workbench-card">
-        <ActionToolbar
-          disabled={sessionState.busy}
-          onCaptureSelectionContext={onCaptureSelectionContext}
-          onSummarizeWorkbook={onSummarizeWorkbook}
-          onCreateDocumentationSheet={onCreateDocumentationSheet}
-          onUndoLastTurn={onUndoLastTurn}
-        />
-
-        <div className="surface-tabs">
+      <section className="main-surface">
+        <div className="main-nav">
           <TabList
-            selectedValue={activeTab}
+            selectedValue={viewMode}
             onTabSelect={(_, data) => {
-              setActiveTab(data.value as typeof activeTab);
+              setViewMode(data.value as typeof viewMode);
             }}
           >
-            <Tab value="chat">Chat</Tab>
-            <Tab value="timeline">Timeline</Tab>
-            <Tab value="diffs">Changes ({pendingChanges.length})</Tab>
+            <Tab value="workspace">Workspace</Tab>
             <Tab value="settings">Settings</Tab>
           </TabList>
         </div>
 
-        <div className="surface-view">
-          {activeTab === "chat" ? <ChatView messages={sessionState.messages} /> : null}
+        {viewMode === "workspace" ? (
+          <div className="workspace-stack">
+            <section className="panel panel-requests">
+              <div className="panel-head">
+                <Text weight="semibold">Requests</Text>
+                <Caption1>{sessionState.messages.length} messages</Caption1>
+              </div>
 
-          {activeTab === "timeline" ? (
-            <section className="panel-single">
-              <AgentTimeline steps={sessionState.timelineSteps} toolCards={sessionState.toolCards} />
+              <ActionToolbar
+                disabled={sessionState.busy}
+                onCaptureSelectionContext={onCaptureSelectionContext}
+                onSummarizeWorkbook={onSummarizeWorkbook}
+                onCreateDocumentationSheet={onCreateDocumentationSheet}
+                onUndoLastTurn={onUndoLastTurn}
+              />
+
+              <div className="panel-body">
+                <ChatView messages={sessionState.messages} />
+              </div>
+
+              <div className="panel-foot">
+                <MessageComposer disabled={sessionState.busy || !settingsState.hydrated} onSend={runPrompt} />
+              </div>
             </section>
-          ) : null}
 
-          {activeTab === "diffs" ? (
-            <div className="diff-list">
-              {sessionState.rangeChanges.map((change) => (
-                <DiffCard key={change.id} change={change} onRevert={onRevertChange} />
-              ))}
-              {sessionState.rangeChanges.length === 0 ? <Body1>No edits yet.</Body1> : null}
-            </div>
-          ) : null}
-
-          {activeTab === "settings" ? (
-            <section className="panel-single">
-              <SettingsPanel />
+            <section className="panel panel-timeline">
+              <div className="panel-head">
+                <Text weight="semibold">Live Timeline</Text>
+                <Caption1>{sessionState.toolCards.length} tool calls</Caption1>
+              </div>
+              <div className="panel-body">
+                <AgentTimeline steps={sessionState.timelineSteps} toolCards={sessionState.toolCards} compact />
+              </div>
             </section>
-          ) : null}
-        </div>
 
-        {activeTab === "chat" ? (
-          <div className="composer-shell">
-            <MessageComposer disabled={sessionState.busy || !settingsState.hydrated} onSend={runPrompt} />
+            <section className="panel panel-changes">
+              <div className="panel-head">
+                <Text weight="semibold">Changes</Text>
+                <Caption1>{pendingChanges.length} pending</Caption1>
+              </div>
+
+              <div className="panel-body changes-list">
+                {sessionState.rangeChanges.map((change) => (
+                  <DiffCard key={change.id} change={change} onRevert={onRevertChange} />
+                ))}
+                {sessionState.rangeChanges.length === 0 ? <Body1>No edits yet.</Body1> : null}
+              </div>
+            </section>
           </div>
-        ) : null}
+        ) : (
+          <div className="settings-stack">
+            <SettingsPanel />
+          </div>
+        )}
       </section>
 
       {sessionState.busy ? <Spinner label="Assistant is working..." className="busy-indicator" /> : null}

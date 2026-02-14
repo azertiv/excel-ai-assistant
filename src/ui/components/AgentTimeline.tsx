@@ -4,6 +4,7 @@ import type { TimelineStep, ToolTimelineCard } from "@/state/types";
 interface AgentTimelineProps {
   steps: TimelineStep[];
   toolCards: ToolTimelineCard[];
+  compact?: boolean;
 }
 
 function statusLabel(status: TimelineStep["status"]): string {
@@ -19,13 +20,15 @@ function statusLabel(status: TimelineStep["status"]): string {
   return "Pending";
 }
 
-export function AgentTimeline({ steps, toolCards }: AgentTimelineProps): JSX.Element {
+export function AgentTimeline({ steps, toolCards, compact = false }: AgentTimelineProps): JSX.Element {
   return (
     <div className="timeline-panel">
-      <div className="timeline-head">
-        <Text weight="semibold">Agent Timeline</Text>
-        <Caption1>Live execution trace</Caption1>
-      </div>
+      {!compact ? (
+        <div className="timeline-head">
+          <Text weight="semibold">Agent Timeline</Text>
+          <Caption1>Live execution trace</Caption1>
+        </div>
+      ) : null}
 
       <div className="timeline-steps">
         {steps.map((step) => (
