@@ -1,0 +1,151 @@
+:root {
+  font-family: Segoe UI, Helvetica Neue, Arial, sans-serif;
+  color: #1b1b1b;
+  background: #f6f8fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(160deg, #f7fbff 0%, #f3f6fb 55%, #eef2f8 100%);
+}
+
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #d6dde6;
+}
+
+.title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 340px;
+  flex: 1;
+  min-height: 0;
+}
+
+.main-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 0;
+  padding: 8px;
+  gap: 8px;
+}
+
+.chat-panel,
+.timeline-panel,
+.diff-list {
+  overflow: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.chat-message {
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid #dce3eb;
+  background: #ffffff;
+  display: grid;
+  gap: 6px;
+}
+
+.chat-user {
+  background: #e7f2ff;
+}
+
+.chat-assistant {
+  background: #ffffff;
+}
+
+.chat-tool,
+.chat-memory {
+  background: #f2f5f8;
+}
+
+.sources-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.composer {
+  display: grid;
+  gap: 8px;
+}
+
+.timeline-step-card,
+.tool-card,
+.diff-card {
+  width: 100%;
+}
+
+.timeline-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tool-details-pre,
+.diff-pre {
+  white-space: pre-wrap;
+  max-height: 140px;
+  overflow: auto;
+  font-size: 12px;
+  background: #f4f6f8;
+  border: 1px solid #dce3eb;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.busy-indicator {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  background: #ffffff;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+@media (max-width: 960px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
