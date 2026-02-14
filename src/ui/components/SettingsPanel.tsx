@@ -173,6 +173,7 @@ export function SettingsPanel(): JSX.Element {
       ) : null}
 
       <Button
+        className="settings-save-btn"
         appearance="primary"
         onClick={() => {
           void saveSettings();

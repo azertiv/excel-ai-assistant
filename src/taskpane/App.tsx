@@ -51,6 +51,18 @@ export default function App(): JSX.Element {
     () => sessionState.rangeChanges.filter((change) => !change.reverted),
     [sessionState.rangeChanges]
   );
+  const assistantMessageCount = useMemo(
+    () => sessionState.messages.filter((message) => message.role === "assistant").length,
+    [sessionState.messages]
+  );
+  const completedToolCount = useMemo(
+    () => sessionState.toolCards.filter((tool) => tool.status === "success").length,
+    [sessionState.toolCards]
+  );
+  const completedStepCount = useMemo(
+    () => sessionState.timelineSteps.filter((step) => step.status === "success").length,
+    [sessionState.timelineSteps]
+  );
 
   const runPrompt = async (prompt: string): Promise<void> => {
     await agentRunner.runTurn({
@@ -145,46 +157,91 @@ export default function App(): JSX.Element {
   return (
     <div className="app-shell">
       <header className="pane-header">
-        <div className="pane-title-group">
-          <Text size={500} weight="semibold" block>
-            Excel AI Assistant
-          </Text>
-          <Caption1>Workbook chat with citations, live timeline, and reversible changes.</Caption1>
+        <div className="pane-head-main">
+          <div className="pane-title-group">
+            <Text size={500} weight="semibold" block>
+              Excel AI Assistant
+            </Text>
+            <Caption1>Minimal workspace for workbook chat, citations, and reversible edits.</Caption1>
+          </div>
+
+          <div className="pane-controls">
+            <div className="control-status-row">
+              <span className={`status-chip ${sessionState.busy ? "busy" : "ready"}`}>
+                {sessionState.busy ? "Running" : "Ready"}
+              </span>
+              <Switch
+                checked={settingsState.settings.approvalMode}
+                label={settingsState.settings.approvalMode ? "Approval mode" : "Autonomous mode"}
+                onChange={(_, data) => {
+                  settingsState.updateSettings({ approvalMode: data.checked });
+                }}
+              />
+            </div>
+
+            <div className="model-select-wrap">
+              <Caption1>Model</Caption1>
+              <Select
+                value={currentModel}
+                onChange={(_, data) => {
+                  settingsState.setModel(settingsState.settings.provider, data.value);
+                }}
+              >
+                {settingsState.settings.provider === "gemini" ? (
+                  <>
+                    <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+                    <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                    <option value={currentModel}>{currentModel}</option>
+                  </>
+                ) : (
+                  <option value={currentModel}>{currentModel}</option>
+                )}
+              </Select>
+            </div>
+          </div>
         </div>
 
-        <div className="pane-controls">
-          <span className={`status-chip ${sessionState.busy ? "busy" : "ready"}`}>
-            {sessionState.busy ? "Running" : "Ready"}
-          </span>
-          <Select
-            value={currentModel}
-            onChange={(_, data) => {
-              settingsState.setModel(settingsState.settings.provider, data.value);
-            }}
-          >
-            {settingsState.settings.provider === "gemini" ? (
-              <>
-                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-                <option value={currentModel}>{currentModel}</option>
-              </>
-            ) : (
-              <option value={currentModel}>{currentModel}</option>
-            )}
-          </Select>
-          <Switch
-            checked={settingsState.settings.approvalMode}
-            label={settingsState.settings.approvalMode ? "Approval" : "Auto"}
-            onChange={(_, data) => {
-              settingsState.updateSettings({ approvalMode: data.checked });
-            }}
-          />
+        <div className="overview-grid">
+          <article className="overview-card">
+            <Caption1>Total messages</Caption1>
+            <Text size={500} weight="semibold">
+              {sessionState.messages.length}
+            </Text>
+          </article>
+          <article className="overview-card">
+            <Caption1>Assistant replies</Caption1>
+            <Text size={500} weight="semibold">
+              {assistantMessageCount}
+            </Text>
+          </article>
+          <article className="overview-card">
+            <Caption1>Tools completed</Caption1>
+            <Text size={500} weight="semibold">
+              {completedToolCount}
+            </Text>
+          </article>
+          <article className="overview-card">
+            <Caption1>Pending edits</Caption1>
+            <Text size={500} weight="semibold">
+              {pendingChanges.length}
+            </Text>
+          </article>
         </div>
       </header>
 
       <section className="main-surface">
         <div className="main-nav">
+          <div className="main-nav-meta">
+            <Text weight="semibold">{viewMode === "workspace" ? "Workspace" : "Settings"}</Text>
+            <Caption1>
+              {viewMode === "workspace"
+                ? "Run prompts and monitor live execution."
+                : "Provider, safety, and runtime controls."}
+            </Caption1>
+          </div>
+
           <TabList
+            className="view-tabs"
             selectedValue={viewMode}
             onTabSelect={(_, data) => {
               setViewMode(data.value as typeof viewMode);
@@ -200,7 +257,7 @@ export default function App(): JSX.Element {
             <section className="panel panel-requests">
               <div className="panel-head">
                 <Text weight="semibold">Requests</Text>
-                <Caption1>{sessionState.messages.length} messages</Caption1>
+                <Caption1>{sessionState.messages.length} messages tracked</Caption1>
               </div>
 
               <ActionToolbar
@@ -223,7 +280,9 @@ export default function App(): JSX.Element {
             <section className="panel panel-timeline">
               <div className="panel-head">
                 <Text weight="semibold">Live Timeline</Text>
-                <Caption1>{sessionState.toolCards.length} tool calls</Caption1>
+                <Caption1>
+                  {sessionState.toolCards.length} tool calls · {completedStepCount}/{sessionState.timelineSteps.length} steps
+                </Caption1>
               </div>
               <div className="panel-body">
                 <AgentTimeline steps={sessionState.timelineSteps} toolCards={sessionState.toolCards} compact />
@@ -240,7 +299,7 @@ export default function App(): JSX.Element {
                 {sessionState.rangeChanges.map((change) => (
                   <DiffCard key={change.id} change={change} onRevert={onRevertChange} />
                 ))}
-                {sessionState.rangeChanges.length === 0 ? <Body1>No edits yet.</Body1> : null}
+                {sessionState.rangeChanges.length === 0 ? <Body1 className="panel-empty">No edits yet.</Body1> : null}
               </div>
             </section>
           </div>

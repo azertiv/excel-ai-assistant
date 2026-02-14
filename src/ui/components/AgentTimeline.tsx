@@ -20,6 +20,22 @@ function statusLabel(status: TimelineStep["status"]): string {
   return "Pending";
 }
 
+function toolStatusLabel(status: ToolTimelineCard["status"]): string {
+  if (status === "success") {
+    return "Done";
+  }
+  if (status === "running") {
+    return "Running";
+  }
+  if (status === "error") {
+    return "Error";
+  }
+  if (status === "cancelled") {
+    return "Cancelled";
+  }
+  return "Pending";
+}
+
 export function AgentTimeline({ steps, toolCards, compact = false }: AgentTimelineProps): JSX.Element {
   return (
     <div className="timeline-panel">
@@ -44,7 +60,9 @@ export function AgentTimeline({ steps, toolCards, compact = false }: AgentTimeli
                   <Caption1 key={`${step.id}_${index}`}>{detail}</Caption1>
                 ))}
               </div>
-            ) : null}
+            ) : (
+              <Caption1 className="timeline-placeholder">Waiting for updates.</Caption1>
+            )}
           </Card>
         ))}
       </div>
@@ -56,7 +74,7 @@ export function AgentTimeline({ steps, toolCards, compact = false }: AgentTimeli
           <Card key={tool.id} size="small" className={`tool-card status-${tool.status}`}>
             <CardHeader
               header={<Body1>{tool.toolName}</Body1>}
-              description={<span className={`status-pill status-${tool.status}`}>{tool.status}</span>}
+              description={<span className={`status-pill status-${tool.status}`}>{toolStatusLabel(tool.status)}</span>}
             />
 
             <div className="tool-grid">

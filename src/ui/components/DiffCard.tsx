@@ -43,22 +43,28 @@ export function DiffCard({ change, onRevert }: DiffCardProps): JSX.Element {
 
       <Divider />
 
-      <Caption1>Before</Caption1>
-      <pre className="diff-pre">{previewMatrix(change.before.values, change.before.formulas)}</pre>
+      <div className="diff-section">
+        <Caption1 className="diff-label">Before</Caption1>
+        <pre className="diff-pre">{previewMatrix(change.before.values, change.before.formulas)}</pre>
+      </div>
 
-      <Caption1>After</Caption1>
-      <pre className="diff-pre">{previewMatrix(change.after.values, change.after.formulas)}</pre>
+      <div className="diff-section">
+        <Caption1 className="diff-label">After</Caption1>
+        <pre className="diff-pre">{previewMatrix(change.after.values, change.after.formulas)}</pre>
+      </div>
 
-      <Button
-        size="small"
-        appearance={change.reverted ? "secondary" : "outline"}
-        disabled={change.reverted}
-        onClick={() => {
-          void onRevert(change);
-        }}
-      >
-        {change.reverted ? "Already reverted" : "Revert this change"}
-      </Button>
+      <div className="diff-actions">
+        <Button
+          size="small"
+          appearance={change.reverted ? "secondary" : "outline"}
+          disabled={change.reverted}
+          onClick={() => {
+            void onRevert(change);
+          }}
+        >
+          {change.reverted ? "Already reverted" : "Revert this change"}
+        </Button>
+      </div>
     </Card>
   );
 }

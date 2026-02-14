@@ -1,4 +1,4 @@
-import { Button, Textarea } from "@fluentui/react-components";
+import { Button, Caption1, Textarea } from "@fluentui/react-components";
 import { useState } from "react";
 
 interface MessageComposerProps {
@@ -38,6 +38,7 @@ export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX
       />
 
       <div className="composer-actions">
+        <Caption1>Cmd/Ctrl + Enter to send quickly</Caption1>
         <Button appearance="primary" disabled={disabled} onClick={() => void submit()}>
           Send request
         </Button>

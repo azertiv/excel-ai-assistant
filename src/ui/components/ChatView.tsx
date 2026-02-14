@@ -32,16 +32,26 @@ export function ChatView({ messages }: ChatViewProps): JSX.Element {
   return (
     <div className="chat-panel">
       <div className="chat-scroll">
+        {messages.length === 0 ? (
+          <div className="chat-empty">
+            <Text weight="semibold">Start a workbook conversation</Text>
+            <Caption1>Use the quick actions or type a request to begin.</Caption1>
+          </div>
+        ) : null}
+
         {messages.map((message) => {
           const parts = splitByCitations(message.content);
           return (
             <article key={message.id} className={`chat-message chat-${message.role}`}>
               <div className="chat-meta">
-                <span className={`chat-role-pill role-${message.role}`}>{ROLE_LABEL[message.role] ?? message.role}</span>
-                <Caption1>{formatTime(message.createdAt)}</Caption1>
+                <div className="chat-meta-left">
+                  <span className={`chat-role-pill role-${message.role}`}>{ROLE_LABEL[message.role] ?? message.role}</span>
+                  {message.streaming ? <span className="chat-streaming">Streaming</span> : null}
+                </div>
+                <Caption1 className="chat-time">{formatTime(message.createdAt)}</Caption1>
               </div>
 
-              <Body1>
+              <Body1 className="chat-content">
                 {parts.map((part, index) => {
                   if (part.type === "citation") {
                     return <CitationLink key={`${message.id}_${index}`} address={part.value} label={`[[${part.value}]]`} />;
@@ -49,8 +59,6 @@ export function ChatView({ messages }: ChatViewProps): JSX.Element {
                   return <span key={`${message.id}_${index}`}>{part.value}</span>;
                 })}
               </Body1>
-
-              {message.streaming ? <Caption1>Streaming response…</Caption1> : null}
             </article>
           );
         })}
