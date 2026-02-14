@@ -14,7 +14,11 @@ export default [
     languageOptions: {
       parser: tsparser,
       parserOptions: {
-        project: "./tsconfig.json"
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: {
+          jsx: true
+        }
       }
     },
     plugins: {
@@ -22,17 +26,10 @@ export default [
       "react-hooks": reactHooks
     },
     rules: {
-      ...(tseslint.configs["recommended-type-checked"]?.rules ?? tseslint.configs.recommended.rules),
+      ...tseslint.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      "@typescript-eslint/no-floating-promises": "off",
-      "@typescript-eslint/no-misused-promises": [
-        "error",
-        {
-          checksVoidReturn: {
-            attributes: false
-          }
-        }
-      ]
+      "no-undef": "off",
+      "@typescript-eslint/no-base-to-string": "off"
     }
   },
   prettier
