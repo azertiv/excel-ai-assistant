@@ -34,6 +34,13 @@ function buildRequest(overrides: Partial<LlmRequest> = {}): LlmRequest {
   };
 }
 
+function requireCapturedPayload(payload: Record<string, unknown> | null): Record<string, unknown> {
+  if (!payload) {
+    throw new Error("Expected OpenAI payload to be captured in fetch stub.");
+  }
+  return payload;
+}
+
 describe("openAiProvider", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -65,13 +72,13 @@ describe("openAiProvider", () => {
     const response = await openAiProvider.createCompletion(buildRequest());
 
     expect(response.kind).toBe("final");
-    expect(payload).not.toBeNull();
-    expect(payload?.model).toBe("gpt-5-mini");
-    expect(payload?.max_completion_tokens).toBe(1200);
-    expect(payload?.reasoning_effort).toBe("medium");
-    expect(payload?.temperature).toBeUndefined();
+    const sentPayload = requireCapturedPayload(payload);
+    expect(sentPayload.model).toBe("gpt-5-mini");
+    expect(sentPayload.max_completion_tokens).toBe(1200);
+    expect(sentPayload.reasoning_effort).toBe("medium");
+    expect(sentPayload.temperature).toBeUndefined();
 
-    const messages = (payload?.messages as Array<{ role: string; content: string }>) ?? [];
+    const messages = (sentPayload.messages as Array<{ role: string; content: string }>) ?? [];
     expect(messages[2]?.role).toBe("user");
     expect(messages[2]?.content).toContain("Tool result (read_range)");
   });
@@ -105,8 +112,9 @@ describe("openAiProvider", () => {
       })
     );
 
-    expect(payload?.temperature).toBe(0.2);
-    expect(payload?.reasoning_effort).toBeUndefined();
+    const sentPayload = requireCapturedPayload(payload);
+    expect(sentPayload.temperature).toBe(0.2);
+    expect(sentPayload.reasoning_effort).toBeUndefined();
   });
 
   it("parses function tool calls", async () => {
