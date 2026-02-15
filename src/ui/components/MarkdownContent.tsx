@@ -178,8 +178,10 @@ export function MarkdownContent({ text }: MarkdownContentProps): JSX.Element {
       flushUnordered(index);
       flushOrdered(index);
 
-      const level = Math.min(4, headingMatch[1].length);
-      const headingText = headingMatch[2].trim();
+      const headingHashes = headingMatch[1] ?? "";
+      const headingRawText = headingMatch[2] ?? "";
+      const level = Math.min(4, headingHashes.length);
+      const headingText = headingRawText.trim();
       const className = `md-heading md-h${level}`;
 
       if (level === 1) {
@@ -214,7 +216,10 @@ export function MarkdownContent({ text }: MarkdownContentProps): JSX.Element {
     if (unorderedMatch) {
       flushParagraph(index);
       flushOrdered(index);
-      unorderedItems.push(unorderedMatch[1]);
+      const unorderedText = unorderedMatch[1];
+      if (unorderedText) {
+        unorderedItems.push(unorderedText);
+      }
       return;
     }
 
@@ -222,7 +227,10 @@ export function MarkdownContent({ text }: MarkdownContentProps): JSX.Element {
     if (orderedMatch) {
       flushParagraph(index);
       flushUnordered(index);
-      orderedItems.push(orderedMatch[1]);
+      const orderedText = orderedMatch[1];
+      if (orderedText) {
+        orderedItems.push(orderedText);
+      }
       return;
     }
 
@@ -231,9 +239,13 @@ export function MarkdownContent({ text }: MarkdownContentProps): JSX.Element {
       flushParagraph(index);
       flushUnordered(index);
       flushOrdered(index);
+      const quoteText = quoteMatch[1];
+      if (!quoteText) {
+        return;
+      }
       blocks.push(
         <blockquote key={`q_${index}`} className="md-quote">
-          {renderInline(quoteMatch[1], `q_${index}`)}
+          {renderInline(quoteText, `q_${index}`)}
         </blockquote>
       );
       return;
