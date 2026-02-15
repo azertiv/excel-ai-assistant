@@ -31,6 +31,10 @@ function askApprovalDialog(request: {
   return Promise.resolve(window.confirm(message));
 }
 
+function formatCompactEuro(value: number): string {
+  return `${value.toFixed(2).replace(".", ",")}€`;
+}
+
 export default function App(): JSX.Element {
   const settingsState = useSettingsStore();
   const sessionState = useSessionStore();
@@ -87,6 +91,11 @@ export default function App(): JSX.Element {
     [sessionState.turnRecords]
   );
 
+  const compactTotalLabel = useMemo(
+    () => formatCompactEuro(geminiCostSummary.totalBillableUsd),
+    [geminiCostSummary.totalBillableUsd]
+  );
+
   const runPrompt = async (prompt: string): Promise<void> => {
     await agentRunner.runTurn({
       prompt,
@@ -111,8 +120,6 @@ export default function App(): JSX.Element {
   return (
     <div className="app-shell compact-shell" style={shellStyle}>
       <header className="topbar">
-        <div className="topbar-spacer" aria-hidden="true" />
-
         <button
           type="button"
           className="stats-btn"
@@ -121,7 +128,7 @@ export default function App(): JSX.Element {
           }}
           aria-expanded={statsOpen}
         >
-          Total estimate: {formatUsd(geminiCostSummary.totalBillableUsd)}
+          {compactTotalLabel}
         </button>
 
         <button type="button" className="settings-btn" onClick={toggleSettings} aria-label="Open settings">

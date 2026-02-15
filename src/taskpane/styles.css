@@ -13,14 +13,12 @@
   --bg-canvas: #f7f9fc;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
-  --surface-tint: #eef4ff;
 
   --line: #e2e8f0;
   --line-strong: #cbd5e1;
 
   --accent-700: #1d4ed8;
   --accent-500: #2563eb;
-  --accent-soft: #dbeafe;
 
   --success: #15803d;
   --danger: #b91c1c;
@@ -55,29 +53,19 @@ body {
   height: 100%;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
   padding: 12px;
   overflow: hidden;
 }
 
 .topbar {
   position: relative;
-  min-height: 46px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-soft);
+  min-height: 36px;
   display: grid;
   align-items: center;
   grid-template-columns: 1fr auto;
-  padding: 8px 10px;
-  z-index: 15;
-}
-
-.topbar-spacer {
-  width: 34px;
-  height: 1px;
+  padding: 0 2px;
+  z-index: 20;
 }
 
 .stats-btn {
@@ -85,15 +73,17 @@ body {
   left: 50%;
   transform: translateX(-50%);
   border: 1px solid var(--line-strong);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--ink-700);
   border-radius: 999px;
-  padding: 6px 12px;
+  min-height: 30px;
+  padding: 4px 12px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
-  transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.16s ease, color 0.16s ease;
 }
 
 .stats-btn:hover {
@@ -103,6 +93,8 @@ body {
 
 .stats-btn:focus-visible,
 .settings-btn:focus-visible,
+.send-arrow-btn:focus-visible,
+.composer-textarea:focus-visible,
 .compact-toggle:focus-visible,
 .revert-round-btn:focus-visible {
   outline: 2px solid rgba(37, 99, 235, 0.45);
@@ -114,11 +106,12 @@ body {
   height: 34px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--ink-700);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
+  box-shadow: var(--shadow-soft);
   transition: border-color 0.16s ease, color 0.16s ease;
 }
 
@@ -140,7 +133,7 @@ body {
   padding: 11px;
   display: grid;
   gap: 8px;
-  z-index: 20;
+  z-index: 30;
 }
 
 .stats-grid {
@@ -166,19 +159,11 @@ body {
 .workspace-main,
 .settings-main {
   min-height: 0;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--shadow-soft);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   overflow: hidden;
-}
-
-.workspace-main {
-  padding: 10px;
-}
-
-.settings-main {
-  padding: 10px;
+  padding: 0;
 }
 
 .activity-feed {
@@ -187,7 +172,7 @@ body {
   display: grid;
   align-content: start;
   gap: 9px;
-  padding: 1px 2px calc(var(--composer-offset) + 16px) 2px;
+  padding: 1px 2px calc(var(--composer-offset) + 14px) 2px;
 }
 
 .activity-empty {
@@ -495,53 +480,80 @@ body {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  width: min(680px, calc(100vw - 28px));
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  width: min(760px, calc(100vw - 24px));
+  display: flex;
+  justify-content: center;
+  z-index: 35;
+  pointer-events: none;
+}
+
+.composer {
+  pointer-events: auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
   border: 1px solid #dbe3ef;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow-mid);
-  padding: 9px;
-  z-index: 30;
+  padding: 8px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
-.composer {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.composer .fui-Textarea {
-  flex: 1;
-  border: 1px solid #d1dbe8;
-  border-radius: 12px;
-  background: var(--surface);
-}
-
-.composer .fui-Textarea:focus-within {
+.composer:focus-within {
   border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), var(--shadow-mid);
 }
 
-.composer .fui-Textarea textarea {
-  min-height: 22px;
-  max-height: 130px;
-  line-height: 1.45;
+.composer-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--ink-900);
   font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 6px 4px;
+  resize: none;
 }
 
-.composer-actions {
-  display: flex;
-  align-items: flex-end;
+.composer-textarea::placeholder {
+  color: var(--ink-500);
+}
+
+.composer-textarea:focus {
+  outline: none;
+}
+
+.composer-textarea:disabled {
+  color: var(--ink-500);
 }
 
 .send-arrow-btn {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  border-radius: 999px !important;
-  padding: 0;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-500);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.16s ease, opacity 0.16s ease;
+}
+
+.send-arrow-btn:hover {
+  background: var(--accent-700);
+}
+
+.send-arrow-btn:disabled {
+  background: #a5b4d4;
+  cursor: not-allowed;
 }
 
 .settings-panel {
@@ -600,7 +612,8 @@ body {
 .activity-feed,
 .settings-panel,
 .compact-pre,
-.md-code-block {
+.md-code-block,
+.composer-textarea {
   scrollbar-width: thin;
   scrollbar-color: #9aa9bc transparent;
 }
@@ -608,14 +621,16 @@ body {
 .activity-feed::-webkit-scrollbar,
 .settings-panel::-webkit-scrollbar,
 .compact-pre::-webkit-scrollbar,
-.md-code-block::-webkit-scrollbar {
+.md-code-block::-webkit-scrollbar,
+.composer-textarea::-webkit-scrollbar {
   width: 8px;
 }
 
 .activity-feed::-webkit-scrollbar-thumb,
 .settings-panel::-webkit-scrollbar-thumb,
 .compact-pre::-webkit-scrollbar-thumb,
-.md-code-block::-webkit-scrollbar-thumb {
+.md-code-block::-webkit-scrollbar-thumb,
+.composer-textarea::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: #9aa9bc;
 }
@@ -647,9 +662,11 @@ body {
   }
 
   .floating-composer-wrap {
-    width: calc(100vw - 18px);
+    width: calc(100vw - 16px);
+    bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .composer {
     border-radius: 14px;
-    padding: 8px;
-    bottom: calc(9px + env(safe-area-inset-bottom));
   }
 }

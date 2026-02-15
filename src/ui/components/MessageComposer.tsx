@@ -1,16 +1,35 @@
-import { Button, Textarea } from "@fluentui/react-components";
 import { ArrowUp16Regular } from "@fluentui/react-icons";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface MessageComposerProps {
   disabled?: boolean;
   onSend: (prompt: string) => Promise<void>;
 }
 
+const MIN_TEXTAREA_HEIGHT_PX = 24;
+const MAX_TEXTAREA_HEIGHT_PX = 136;
+
 export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX.Element {
   const [value, setValue] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const canSend = useMemo(() => value.trim().length > 0 && !disabled, [value, disabled]);
+
+  const resizeTextarea = useCallback((): void => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "0px";
+    const nextHeight = Math.max(MIN_TEXTAREA_HEIGHT_PX, Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > MAX_TEXTAREA_HEIGHT_PX ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [value, resizeTextarea]);
 
   const submit = async (): Promise<void> => {
     const prompt = value.trim();
@@ -24,12 +43,16 @@ export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX
 
   return (
     <div className="composer">
-      <Textarea
-        resize="none"
+      <textarea
+        ref={textareaRef}
+        className="composer-textarea"
         rows={1}
         value={value}
-        onChange={(_, data) => {
-          setValue(data.value);
+        onChange={(event) => {
+          setValue(event.target.value);
+        }}
+        onInput={() => {
+          resizeTextarea();
         }}
         onKeyDown={(event) => {
           if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
@@ -41,18 +64,17 @@ export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX
         disabled={disabled}
       />
 
-      <div className="composer-actions">
-        <Button
-          className="send-arrow-btn"
-          appearance="primary"
-          icon={<ArrowUp16Regular />}
-          aria-label="Send message"
-          disabled={!canSend}
-          onClick={() => {
-            void submit();
-          }}
-        />
-      </div>
+      <button
+        type="button"
+        className="send-arrow-btn"
+        aria-label="Send message"
+        disabled={!canSend}
+        onClick={() => {
+          void submit();
+        }}
+      >
+        <ArrowUp16Regular />
+      </button>
     </div>
   );
 }
