@@ -1,5 +1,5 @@
 import { Caption1, Spinner, Text } from "@fluentui/react-components";
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { estimateGeminiCostSummary, formatUsd, GEMINI_PRICING_SOURCE_URL, GEMINI_PRICING_UPDATED } from "@/llm/geminiPricing";
 import { agentRunner } from "@/llm/agentRunner";
 import { revertRangeChange } from "@/office/tools";
@@ -37,12 +37,45 @@ export default function App(): JSX.Element {
 
   const [viewMode, setViewMode] = useState<"workspace" | "settings">("workspace");
   const [statsOpen, setStatsOpen] = useState(false);
+  const [composerOffset, setComposerOffset] = useState(0);
 
+  const composerRef = useRef<HTMLDivElement | null>(null);
   const loadSettings = settingsState.loadSettings;
 
   useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
+
+  useEffect(() => {
+    if (viewMode !== "workspace") {
+      setComposerOffset(0);
+      return;
+    }
+
+    const node = composerRef.current;
+    if (!node) {
+      return;
+    }
+
+    const measure = (): void => {
+      const next = Math.ceil(node.getBoundingClientRect().height + 16);
+      setComposerOffset((prev) => (Math.abs(prev - next) > 1 ? next : prev));
+    };
+
+    measure();
+
+    const resizeObserver = new ResizeObserver(() => {
+      measure();
+    });
+
+    resizeObserver.observe(node);
+    window.addEventListener("resize", measure);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [viewMode]);
 
   const geminiCostSummary = useMemo(
     () =>
@@ -71,13 +104,14 @@ export default function App(): JSX.Element {
     setStatsOpen(false);
   };
 
+  const shellStyle = {
+    "--composer-offset": `${composerOffset}px`
+  } as CSSProperties;
+
   return (
-    <div className="app-shell compact-shell">
+    <div className="app-shell compact-shell" style={shellStyle}>
       <header className="topbar">
-        <div className="topbar-title">
-          <Text weight="semibold">Excel AI Assistant</Text>
-          <Caption1>{sessionState.busy ? "Assistant is working" : "Ready"}</Caption1>
-        </div>
+        <div className="topbar-spacer" aria-hidden="true" />
 
         <button
           type="button"
@@ -87,7 +121,7 @@ export default function App(): JSX.Element {
           }}
           aria-expanded={statsOpen}
         >
-          Estimated total: {formatUsd(geminiCostSummary.totalBillableUsd)}
+          Total estimate: {formatUsd(geminiCostSummary.totalBillableUsd)}
         </button>
 
         <button type="button" className="settings-btn" onClick={toggleSettings} aria-label="Open settings">
@@ -98,6 +132,7 @@ export default function App(): JSX.Element {
           <div className="stats-panel">
             <Text weight="semibold">Request Cost Estimate</Text>
             <Caption1>{geminiCostSummary.turnCount} Gemini turn(s)</Caption1>
+
             <div className="stats-grid">
               <span>Input</span>
               <span>{geminiCostSummary.inputTokens.toLocaleString()} tokens</span>
@@ -119,6 +154,7 @@ export default function App(): JSX.Element {
               <span>{geminiCostSummary.cacheWriteTokens.toLocaleString()} tokens</span>
               <span>{formatUsd(geminiCostSummary.cacheWriteCostUsd)}</span>
             </div>
+
             <div className="stats-total">Billable total: {formatUsd(geminiCostSummary.totalBillableUsd)}</div>
             <Caption1>Reasoning tokens are estimated at 25% of output when usage metadata is unavailable.</Caption1>
             <Caption1>
@@ -147,7 +183,7 @@ export default function App(): JSX.Element {
       )}
 
       {viewMode === "workspace" ? (
-        <div className="floating-composer-wrap">
+        <div ref={composerRef} className="floating-composer-wrap">
           <MessageComposer disabled={sessionState.busy || !settingsState.hydrated} onSend={runPrompt} />
         </div>
       ) : null}
