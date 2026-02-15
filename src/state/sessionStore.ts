@@ -3,6 +3,7 @@ import type {
   ChatMessage,
   MemoryState,
   RangeChange,
+  TimelineEvent,
   TimelineStep,
   TimelineStepId,
   ToolTimelineCard,
@@ -26,6 +27,7 @@ interface SessionStoreState {
   currentTurnId: string | null;
   messages: ChatMessage[];
   timelineSteps: TimelineStep[];
+  timelineEvents: TimelineEvent[];
   toolCards: ToolTimelineCard[];
   rangeChanges: RangeChange[];
   turnRecords: TurnRecord[];
@@ -54,6 +56,7 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
   currentTurnId: null,
   messages: [],
   timelineSteps: cloneTimeline(),
+  timelineEvents: [],
   toolCards: [],
   rangeChanges: [],
   turnRecords: [],
@@ -120,18 +123,31 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
   replaceMessages: (messages) => set({ messages }),
   resetTimeline: () => set({ timelineSteps: cloneTimeline(), toolCards: [] }),
   setTimelineStep: (id, status, detail) => {
-    set((state) => ({
-      timelineSteps: state.timelineSteps.map((step) => {
-        if (step.id !== id) {
-          return step;
-        }
-        return {
-          ...step,
-          status,
-          details: detail ? [...step.details, detail] : step.details
-        };
-      })
-    }));
+    set((state) => {
+      const step = state.timelineSteps.find((item) => item.id === id);
+      const timelineEvent: TimelineEvent = {
+        id: createId("event"),
+        stepId: id,
+        label: step?.label ?? id,
+        status,
+        detail,
+        createdAt: new Date().toISOString()
+      };
+
+      return {
+        timelineSteps: state.timelineSteps.map((timelineStep) => {
+          if (timelineStep.id !== id) {
+            return timelineStep;
+          }
+          return {
+            ...timelineStep,
+            status,
+            details: detail ? [...timelineStep.details, detail] : timelineStep.details
+          };
+        }),
+        timelineEvents: [...state.timelineEvents, timelineEvent]
+      };
+    });
   },
   addToolCard: (card) => {
     const id = card.id ?? createId("tool");
@@ -160,7 +176,13 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
   },
   addRangeChange: (change) => {
     set((state) => ({
-      rangeChanges: [change, ...state.rangeChanges]
+      rangeChanges: [
+        ...state.rangeChanges,
+        {
+          ...change,
+          createdAt: change.createdAt ?? new Date().toISOString()
+        }
+      ]
     }));
   },
   markRangeChangeReverted: (changeId) => {
@@ -182,5 +204,6 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       turnRecords: [record, ...state.turnRecords]
     }));
   },
-  clearSession: () => set({ messages: [], timelineSteps: cloneTimeline(), toolCards: [], rangeChanges: [], turnRecords: [], memory: null })
+  clearSession: () =>
+    set({ messages: [], timelineSteps: cloneTimeline(), timelineEvents: [], toolCards: [], rangeChanges: [], turnRecords: [], memory: null })
 }));

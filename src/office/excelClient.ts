@@ -290,7 +290,8 @@ export async function writeValues(address: string, values: unknown[][], turnId: 
     address: after.address,
     before,
     after,
-    changedCellCount: countChangedCells(before, after)
+    changedCellCount: countChangedCells(before, after),
+    createdAt: new Date().toISOString()
   };
 }
 
@@ -313,7 +314,8 @@ export async function writeFormulas(address: string, formulas: string[][], turnI
     address: after.address,
     before,
     after,
-    changedCellCount: countChangedCells(before, after)
+    changedCellCount: countChangedCells(before, after),
+    createdAt: new Date().toISOString()
   };
 }
 

@@ -1,4 +1,4 @@
-import { Button, Caption1, Textarea } from "@fluentui/react-components";
+import { Button, Textarea } from "@fluentui/react-components";
 import { useState } from "react";
 
 interface MessageComposerProps {
@@ -22,7 +22,7 @@ export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX
     <div className="composer">
       <Textarea
         resize="vertical"
-        rows={4}
+        rows={2}
         value={value}
         onChange={(_, data) => {
           setValue(data.value);
@@ -33,14 +33,13 @@ export function MessageComposer({ disabled, onSend }: MessageComposerProps): JSX
             void submit();
           }
         }}
-        placeholder="Ask anything about the workbook. Use Cmd/Ctrl + Enter to send."
+        placeholder="Ask anything about the workbook. Cmd/Ctrl + Enter to send."
         disabled={disabled}
       />
 
       <div className="composer-actions">
-        <Caption1>Cmd/Ctrl + Enter to send quickly</Caption1>
         <Button appearance="primary" disabled={disabled} onClick={() => void submit()}>
-          Send request
+          Send
         </Button>
       </div>
     </div>

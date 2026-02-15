@@ -54,11 +54,22 @@ export type TimelineStepId =
   | "execution"
   | "summary";
 
+export type TimelineStepStatus = "pending" | "running" | "success" | "error";
+
 export interface TimelineStep {
   id: TimelineStepId;
   label: string;
-  status: "pending" | "running" | "success" | "error";
+  status: TimelineStepStatus;
   details: string[];
+}
+
+export interface TimelineEvent {
+  id: string;
+  stepId: TimelineStepId;
+  label: string;
+  status: TimelineStepStatus;
+  detail?: string;
+  createdAt: string;
 }
 
 export interface ToolTimelineCard {
@@ -90,6 +101,7 @@ export interface RangeChange {
   before: RangeSnapshot;
   after: RangeSnapshot;
   changedCellCount: number;
+  createdAt: string;
   reverted?: boolean;
 }
 
