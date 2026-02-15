@@ -168,7 +168,18 @@ Each turn logs estimated input/output tokens to `AI Log` when logging is enabled
 - Falls back to JSON tool-call protocol parsing.
 - Streaming: simulated progressive rendering for consistent UX.
 
-### OpenAI / Anthropic
+### OpenAI (Optional)
+
+- Implemented behind the same provider interface and configurable in Settings.
+- Default model is `gpt-5-mini` (override via `VITE_DEFAULT_OPENAI_MODEL`).
+- Default options shown in Settings:
+  - `gpt-5-mini`
+  - `gpt-5`
+  - `gpt-5-nano`
+  - `gpt-4.1-mini`
+- GPT-5 family requests use `max_completion_tokens` and `reasoning_effort`, and skip `temperature` for compatibility.
+
+### Anthropic (Optional)
 
 - Implemented behind the same provider interface.
 - Optional and configurable in Settings.

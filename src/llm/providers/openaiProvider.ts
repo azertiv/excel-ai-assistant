@@ -1,11 +1,20 @@
-import type { LlmRequest, LlmResponse, ProviderAdapter } from "@/llm/types";
+import type { LlmMessage, LlmRequest, LlmResponse, ProviderAdapter } from "@/llm/types";
 import { estimateTokensFromText } from "@/utils/token";
 import { maybeProxyRequest, parseJsonToolCall, simulateStreaming } from "./base";
+
+type OpenAiChatRole = "system" | "user" | "assistant";
+
+interface OpenAiMessagePart {
+  type?: string;
+  text?: string;
+}
+
+type OpenAiMessageContent = string | OpenAiMessagePart[] | null | undefined;
 
 interface OpenAiResponse {
   choices?: Array<{
     message?: {
-      content?: string;
+      content?: OpenAiMessageContent;
       tool_calls?: Array<{
         function?: {
           name?: string;
@@ -16,6 +25,56 @@ interface OpenAiResponse {
   }>;
 }
 
+function isGpt5Family(model: string): boolean {
+  return model.toLowerCase().startsWith("gpt-5");
+}
+
+function toOpenAiMessages(messages: LlmMessage[]): Array<{ role: OpenAiChatRole; content: string }> {
+  return messages.map((message) => {
+    if (message.role === "system") {
+      return {
+        role: "system",
+        content: message.content
+      };
+    }
+
+    if (message.role === "assistant") {
+      return {
+        role: "assistant",
+        content: message.content
+      };
+    }
+
+    if (message.role === "tool") {
+      const label = message.name ? `Tool result (${message.name})` : "Tool result";
+      return {
+        role: "user",
+        content: `${label}:\n${message.content}`
+      };
+    }
+
+    return {
+      role: "user",
+      content: message.content
+    };
+  });
+}
+
+function extractMessageText(content: OpenAiMessageContent): string {
+  if (!content) {
+    return "";
+  }
+
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  return content
+    .map((part) => part.text ?? "")
+    .join("\n")
+    .trim();
+}
+
 export const openAiProvider: ProviderAdapter = {
   id: "openai",
   createCompletion: async (request: LlmRequest): Promise<LlmResponse> => {
@@ -23,9 +82,10 @@ export const openAiProvider: ProviderAdapter = {
       throw new Error("OpenAI API key is missing. Add it in Settings.");
     }
 
-    const payload = {
+    const isGpt5 = isGpt5Family(request.model);
+    const payload: Record<string, unknown> = {
       model: request.model,
-      messages: request.messages,
+      messages: toOpenAiMessages(request.messages),
       tools: request.tools.map((tool) => ({
         type: "function",
         function: {
@@ -34,9 +94,14 @@ export const openAiProvider: ProviderAdapter = {
           parameters: tool.inputSchema
         }
       })),
-      temperature: request.temperature ?? 0.2,
-      max_tokens: request.maxOutputTokens
+      max_completion_tokens: request.maxOutputTokens
     };
+
+    if (isGpt5) {
+      payload.reasoning_effort = "medium";
+    } else {
+      payload.temperature = request.temperature ?? 0.2;
+    }
 
     const performDirect = async (): Promise<OpenAiResponse> => {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -88,7 +153,7 @@ export const openAiProvider: ProviderAdapter = {
       };
     }
 
-    const text = message?.content?.trim() ?? "";
+    const text = extractMessageText(message?.content);
     const parsedJsonToolCall = parseJsonToolCall(text, request.tools);
     if (parsedJsonToolCall) {
       return parsedJsonToolCall;

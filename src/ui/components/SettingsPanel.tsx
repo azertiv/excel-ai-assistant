@@ -1,11 +1,31 @@
 import { Button, Caption1, Field, Input, Select, Slider, Switch, Text } from "@fluentui/react-components";
 import { tokenBudgetBounds, useSettingsStore } from "@/state/settingsStore";
 
+const MODEL_OPTIONS = {
+  gemini: ["gemini-3-flash-preview", "gemini-2.5-flash-lite"],
+  openai: ["gpt-5-mini", "gpt-5", "gpt-5-nano", "gpt-4.1-mini"],
+  anthropic: ["claude-3-5-sonnet-latest"]
+} as const;
+
+function modelOptionsForProvider(provider: keyof typeof MODEL_OPTIONS, activeModel: string): string[] {
+  const defaults: string[] = [...MODEL_OPTIONS[provider]];
+  if (!activeModel) {
+    return defaults;
+  }
+
+  if (defaults.includes(activeModel)) {
+    return defaults;
+  }
+
+  return [...defaults, activeModel];
+}
+
 export function SettingsPanel(): JSX.Element {
   const { settings, setProvider, setModel, setApiKey, updateSettings, saveSettings } = useSettingsStore();
 
   const activeModel = settings.models[settings.provider];
   const activeKey = settings.apiKeys[settings.provider] ?? "";
+  const modelOptions = modelOptionsForProvider(settings.provider, activeModel);
 
   return (
     <aside className="settings-panel">
@@ -39,15 +59,11 @@ export function SettingsPanel(): JSX.Element {
               setModel(settings.provider, data.value);
             }}
           >
-            {settings.provider === "gemini" ? (
-              <>
-                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-                <option value={activeModel}>{activeModel}</option>
-              </>
-            ) : (
-              <option value={activeModel}>{activeModel}</option>
-            )}
+            {modelOptions.map((model) => (
+              <option key={model} value={model}>
+                {model}
+              </option>
+            ))}
           </Select>
         </Field>
 

@@ -10,7 +10,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   provider: "gemini",
   models: {
     gemini: import.meta.env.VITE_DEFAULT_GEMINI_MODEL ?? "gemini-3-flash-preview",
-    openai: "gpt-4o-mini",
+    openai: import.meta.env.VITE_DEFAULT_OPENAI_MODEL ?? "gpt-5-mini",
     anthropic: "claude-3-5-sonnet-latest"
   },
   approvalMode: true,
